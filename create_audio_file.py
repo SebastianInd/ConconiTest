@@ -1,6 +1,8 @@
-import wave
-import struct
 import math
+import os
+import struct
+import sys
+import wave
 
 # Set the parameters for the WAV file
 nchannels = 1  # Number of channels
@@ -9,6 +11,19 @@ framerate = 8000  # Frame rate
 # Set the parameters for the beep
 frequency = 3000  # Frequency of the beep (in Hz)
 duration = 0.15  # Duration of the beep (in seconds)
+
+
+def _get_parser():
+    import argparse
+    parser = argparse.ArgumentParser(
+        description='Create the audio file for performing the Conconi Test.')
+    parser.add_argument('--start_speed', type=float, default=12,
+                        help='The start speed of the test in km/h. Default is 12km/h.')
+    parser.add_argument('--end_speed', type=float, default=23,
+                        help='The end speed of the test in km/h. Default is 23km/h.')
+    parser.add_argument('-o', '--output-file', type=str, default=None,
+                        help='The output file for the audio.')
+    return parser
 
 
 def _get_beep_interval_time(speed: float) -> float:
@@ -59,6 +74,21 @@ def _create_audio_file(file_name: str, samples: list):
     wavefile.close()
 
 
-def create_conconi_audio(file_name: str, start_speed: float = 10.0, end_speed: float = 23.0):
+def create_conconi_audio(file_name: str, start_speed: float, end_speed: float):
+    print("Generating audio file for Conconi Test starting at " +
+          str(int(start_speed)) + "km/h and ending at " + str(int(end_speed)) + "km/h.")
     samples = _get_samples(start_speed, end_speed)
     _create_audio_file(file_name, samples)
+    print(file_name + " created!")
+
+
+if __name__ == "__main__":
+    args = _get_parser().parse_args()
+    if not args.output_file:
+        args.output_file = "conconi_" + str(int(args.start_speed)) + "kph.wav"
+    # Add the ".wav" extension to the output_file if needed
+    if not os.path.splitext(args.output_file)[1].lower() == ".wav":
+        args.output_file += ".wav"
+
+    sys.exit(create_conconi_audio(args.output_file,
+             args.start_speed, args.end_speed))
